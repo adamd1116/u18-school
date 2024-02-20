@@ -1,3 +1,5 @@
+#WORK ON NEW INPUT FORMS
+
 #TODO:
 
 #Input form for new customer details - In progress
@@ -9,50 +11,51 @@
 
 from guizero import *
 import mysql.connector
+from datetime import *
 
 BG_COLOUR = "#5373A6"
 
-# MAKE THIS A FUNCTION TO REPEAT
-""" 
-with open('password.txt', 'r') as f:
-    dbpassword = f.read()
+################## SETTING UP SQL INSERT/SELECT FUNCTIONS ##################
 
-cnx = mysql.connector.connect(host='127.0.0.1', port='3306', user='root', password=dbpassword, database="mydb")
-
-if cnx and cnx.is_connected():
-
-    with cnx.cursor() as cursor:
-
-        result = cursor.execute("SELECT * FROM bookings")
-
-        rows = cursor.fetchall()
-
-        for rows in rows:
-
-            print(rows)
-
-    cnx.close()
-
-else:
-
-    print("Could not connect")
-
-cnx.close()
-"""    
-    
+mydb = mysql.connector.connect(
+    host="127.0.0.1",
+    user="root",
+    password="rootpassword123",
+    database="mydb"
+    )
+dbcursor = mydb.cursor()
+   
 app = App(title="Silver Dawn Coaches Digital Booking System", height=300, width=550,layout="grid")
 app.bg = BG_COLOUR
 
+def sql_insert(insert_statement, insert_values):
+    try:
+        dbcursor.execute(insert_statement, insert_values)
+        mydb.commit()
+    except Exception as e:
+        app.error("Error!", e)
+        
+def sql_select(data_to_select,table):
+    pass
+      
+def close_sql():
+    dbcursor.close()
+    mydb.close()
+    
+app.when_closed = close_sql()
+
+################## SQL FUNCTIONS END ##################
+
 ################## CUSTOMER DETAIL INPUT WINDOW START ##################
 
-#main section of customer details window    
+# main section of customer details window    
 customer_details_window = Window(app, title = "Add a new customer", height=700, width=600,layout="grid")
 customer_details_window.bg = BG_COLOUR
 customer_details_window_title = Box(customer_details_window,grid=[0,0],width=600,height=80,align="top",border=True)
 customer_details_window_message = Text(customer_details_window_title, text="Add a new\ncustomer record",size=25)
 customer_input_form_box = Box(customer_details_window,grid=[0,1],width=600,height=50,align="left",border=True)
 
-#Adding boxes to allow users to input data
+# adding boxes to allow users to input data
 customer_details_window_subhedaing = Text(customer_input_form_box,text="Please fill in the following data",align="bottom")
 customer_input_form_first_name = Box(customer_details_window,grid=[0,2],width=600,height=50,align="left",border=True)
 customer_input_form_last_name = Box(customer_details_window,grid=[0,3],width=600,height=50,align="left",border=True)
@@ -64,7 +67,7 @@ customer_input_form_postcode = Box(customer_details_window,grid=[0,8],width=600,
 customer_input_form_city = Box(customer_details_window,grid=[0,9],width=600,height=50,align="left",border=True)
 customer_input_form_special_notes = Box(customer_details_window,grid=[0,10],width=600,height=50,align="left",border=True)
 
-# Filling boxes with input forms
+# filling boxes with input forms
 fname_input = TextBox(customer_input_form_first_name, text="Enter: First Name")
 lname_input = TextBox(customer_input_form_last_name, text="Enter: Last Name")
 email_input = TextBox(customer_input_form_email,text="Enter: Email Address")
@@ -74,7 +77,7 @@ add2_input = TextBox(customer_input_form_address_2, text="Enter: Address Line 2 
 pcode_input = TextBox(customer_input_form_postcode, text="Enter: Post Code")
 city_input = TextBox(customer_input_form_city, text="Enter: City")
 snotes_input = TextBox(customer_input_form_special_notes, text="Enter: Special Notes (optional, leave blank if needed)")
-input_forms = [fname_input,lname_input,email_input,pnumber_input,add1_input,add2_input,snotes_input,pcode_input,city_input]
+input_forms = [fname_input,lname_input,add1_input,add2_input,pcode_input,pnumber_input,email_input,snotes_input,city_input]
 
 def clear_text(input_field):
     if input_field.value[0:6]=="Enter:": # clears the input field when user begins to type
@@ -91,43 +94,23 @@ pcode_input.when_key_pressed = lambda: clear_text(pcode_input)
 city_input.when_key_pressed = lambda: clear_text(city_input)
 snotes_input.when_key_pressed = lambda: clear_text(snotes_input)
 
-#too lazy to manually change all backgrounds and widths
+# too lazy to manually change all backgrounds and widths
 for i in input_forms:
-    if i == pnumber_input:
-        i.bg = "white"
-        i.width = 75
-    else:
-        i.bg = "white"
-        i.width = 50
+    i.bg = "white"
+    i.width = 50 
+
+# storing all data 
+def validate_customer_data(data):
     
-def collect_data_to_send(data):# DATA TYPE MIGHT NEED TO BE CHANGED TO TUPLE
-    global collected_data
     collected_data = [] # SOME DATA TYPES LIKE ID MIGHT NEED TO BE KEPT AS AN INT
     for x in data:
         collected_data.append(x.value)
     
-    print(collected_data)
+    data_to_insert = tuple(collected_data)
     
-confirm_customer_details = PushButton(customer_details_window,grid=[0,11] ,text="Add customer data",command=lambda: collect_data_to_send(input_forms) )
-
-def validate_customer_data(data):
-    global customer_data_validated
-    customer_data_validated = False
-    list_for_validating = []
-    email_verified = False
-    empty_data_check = True
-    for x in data[2]: 
-        if x == '@':
-            email_verified = True
-    for x in data:
-        if (x=="" or x[0:6]=="Enter") and (data.index(x)!=5 or data.index(x)!=6):
-            empty_data_check = False
-            
-    if email_verified == False:
-        customer_details_window.error("Error!", "The email you entered was invalid, please try again")
-           
-    if email_verified == True and empty_data_check == True:
-        customer_data_validated = True
+    print(data_to_insert)   
+          
+confirm_customer_details = PushButton(customer_details_window,grid=[0,11] ,text="Add customer data",command=lambda: validate_customer_data(input_forms) )
 
 ################## CUSTOMER DETAIL INPUT WINDOW END ##################
 

@@ -43,6 +43,8 @@ cnx.close()
 app = App(title="Silver Dawn Coaches Digital Booking System", height=300, width=550,layout="grid")
 app.bg = BG_COLOUR
 
+################## CUSTOMER DETAIL INPUT WINDOW ##################
+
 #main section of customer details window    
 customer_details_window = Window(app, title = "Add a new customer", height=700, width=600,layout="grid")
 customer_details_window.bg = BG_COLOUR

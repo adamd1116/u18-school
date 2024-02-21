@@ -1,7 +1,5 @@
 import mysql.connector
 
-
-
 mydb = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
@@ -11,18 +9,38 @@ mydb = mysql.connector.connect(
 
 dbcursor = mydb.cursor()
 
-#insert_statement = "INSERT INTO customer (firstName,lastName,email,phoneNumber,addressLine1,addressLine2,city,postcode,specialNotes) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+empty_data = []
+new_data = []
+statement_one = "SELECT customer_id FROM booking WHERE trip_id = (%s)"
+statement_one_data = [8]
 
-#insert_values = ("Ronnie", "Coleman", "ronniecoleman@gmail.com", "0763726993", "Apartment 1","123 Cherry Avenue", "London", "E9 HL7", "Needs two seats due to massive lats")
+with dbcursor as cursor:
+    result = cursor.execute(statement_one,statement_one_data)
+    rows = cursor.fetchall()
+    for rows in rows:
+        empty_data.append(rows)
+        
+for x in empty_data:
+    new_data.append(int(x[0]))
 
-#dbcursor.execute(insert_statement,insert_values)
+placeholders = ', '.join(['%s'] * len(new_data))
 
+query = "SELECT * FROM customer WHERE customer_id IN ({})".format(placeholders)
+
+dbcursor = mydb.cursor()
+with dbcursor as cursor:
+    cursor.execute(query, new_data)
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row)
+
+dbcursor.close()
+mydb.close()
+
+"""
 with dbcursor as cursor:
     result = cursor.execute("SELECT * FROM booking")
     rows = cursor.fetchall()
     for rows in rows:
         print(rows)
-#mydb.commit() - Only needed for insert
-
-dbcursor.close()
-mydb.close()
+"""

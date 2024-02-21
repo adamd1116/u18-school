@@ -23,17 +23,27 @@ mydb = mysql.connector.connect(
     password="rootpassword123",
     database="mydb"
     )
-dbcursor = mydb.cursor()
    
 app = App(title="Silver Dawn Coaches Digital Booking System", height=300, width=550,layout="grid")
 app.bg = BG_COLOUR
 
 def sql_insert(insert_statement, insert_values):
+    global mydb
+    mydb = mysql.connector.connect(
+        host="127.0.0.1",
+        user="root",
+        password="rootpassword123",
+        database="mydb"
+    )
+    global dbcursor
+    dbcursor = mydb.cursor()
     try:
         dbcursor.execute(insert_statement, insert_values)
         mydb.commit()
+        print("SQL INSERT SUCCESSFUL")
     except Exception as e:
         app.error("Error!", e)
+        print(e)
         
 def sql_select(data_to_select,table):
     pass
@@ -42,7 +52,7 @@ def close_sql():
     dbcursor.close()
     mydb.close()
     
-app.when_closed = close_sql()
+app.when_closed = lambda: close_sql()
 
 ################## SQL FUNCTIONS END ##################
 
@@ -68,15 +78,15 @@ customer_input_form_city = Box(customer_details_window,grid=[0,9],width=600,heig
 customer_input_form_special_notes = Box(customer_details_window,grid=[0,10],width=600,height=50,align="left",border=True)
 
 # filling boxes with input forms
-fname_input = TextBox(customer_input_form_first_name, text="Enter: First Name")
-lname_input = TextBox(customer_input_form_last_name, text="Enter: Last Name")
-email_input = TextBox(customer_input_form_email,text="Enter: Email Address")
-pnumber_input = TextBox(customer_input_form_phone_number, text="Enter: Phone Number")
-add1_input = TextBox(customer_input_form_address_1, text="Enter: Address Line 1")
-add2_input = TextBox(customer_input_form_address_2, text="Enter: Address Line 2 (optional, leave blank if needed)")
-pcode_input = TextBox(customer_input_form_postcode, text="Enter: Post Code")
-city_input = TextBox(customer_input_form_city, text="Enter: City")
-snotes_input = TextBox(customer_input_form_special_notes, text="Enter: Special Notes (optional, leave blank if needed)")
+fname_input = TextBox(customer_input_form_first_name, text="Enter: First Name (required)")
+lname_input = TextBox(customer_input_form_last_name, text="Enter: Last Name (required)")
+email_input = TextBox(customer_input_form_email,text="Enter: Email Address (required)")
+pnumber_input = TextBox(customer_input_form_phone_number, text="Enter: Phone Number (required)")
+add1_input = TextBox(customer_input_form_address_1, text="Enter: Address Line 1 (required)")
+add2_input = TextBox(customer_input_form_address_2, text="Enter: Address Line 2 (optional)")
+pcode_input = TextBox(customer_input_form_postcode, text="Enter: Post Code (required)")
+city_input = TextBox(customer_input_form_city, text="Enter: City (required)")
+snotes_input = TextBox(customer_input_form_special_notes, text="Enter: Special Notes (optional)")
 input_forms = [fname_input,lname_input,add1_input,add2_input,pcode_input,pnumber_input,email_input,snotes_input,city_input]
 
 def clear_text(input_field):
@@ -99,25 +109,51 @@ for i in input_forms:
     i.bg = "white"
     i.width = 50 
 
-# storing all data 
-def validate_customer_data(data):
+previous_customer_data = ()
+
+# collecting, validating and inserting into DB 
+def confirm_insert_customer_data(data):
     
-    collected_data = [] # SOME DATA TYPES LIKE ID MIGHT NEED TO BE KEPT AS AN INT
+    presence_check = True
+    
+    collected_data = []
+    conv_list = []
+    
     for x in data:
-        collected_data.append(x.value)
+        conv_list.append(x.value)
     
-    data_to_insert = tuple(collected_data)
+    for x in data:
+        temp = x.value
+        if temp[0:6]=='Enter:' or temp  == '':
+            if conv_list.index(temp) == 3 or conv_list.index(temp) == 7:
+                collected_data.append('None')
+            else:
+                presence_check = False
+                customer_details_window.error("Error!", "Please ensure all required fields are filled in")
+        else:
+            collected_data.append(temp)
     
-    print(data_to_insert)   
-          
-confirm_customer_details = PushButton(customer_details_window,grid=[0,11] ,text="Add customer data",command=lambda: validate_customer_data(input_forms) )
+    customer_insert_statement = "INSERT INTO customer (firstName,surname,AddressLine1,AddressLine2,Postcode,phoneNum,email,specialNeed,city) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    customer_insert_values = tuple(collected_data)
+    
+    if presence_check == True:
+        sql_insert(customer_insert_statement,customer_insert_values)
+
+confirm_customer_details = PushButton(customer_details_window,grid=[0,11] ,text="Add customer data",command=lambda: confirm_insert_customer_data(input_forms) )
 
 ################## CUSTOMER DETAIL INPUT WINDOW END ##################
+
+################## BOOKING INPUT WINDOW START ##################
 
 booking_window = Window(app, title = "Add a new booking", height=500, width=600)
 booking_window.bg = BG_COLOUR
 booking_window_title = Box(booking_window,width=600,height=100,align="top",border=True)
 booking_window_message = Text(booking_window_title, text="Add a new booking",size=25)
+booking_input_form = Box(booking_window,grid=[0,1],width=600,height=50,align="left",border=True)
+
+booking_subheading = Text(booking_window,)
+
+################## BOOKING INPUT WINDOW END ##################
 
 destination_window = Window(app, title = "Add a new destination", height=500, width=600,layout="grid")
 destination_window.bg = BG_COLOUR

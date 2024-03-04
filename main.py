@@ -2,7 +2,7 @@
 
 #TODO:
 
-#Input form for new customer details - In progress
+#Input form for new customer details - Done
 #Input form for new bookings
 #Input form for new destination
 #Input form for new trip
@@ -145,23 +145,55 @@ booking_window = Window(app, title = "Add a new booking", height=500, width=600)
 booking_window.bg = BG_COLOUR
 booking_window_title = Box(booking_window,width=600,height=100,align="top",border=True)
 booking_window_message = Text(booking_window_title, text="Add a new booking",size=25)
-booking_input_form = Box(booking_window,width=600,height=50,align="left",border=True)
+booking_input_form = Box(booking_window,width=600,height=200,align="left",border=True)
 
 dbcursor = mydb.cursor()
 
 def show_customer_data():
-    customer_window = Window(app, title="Customer Data")
+    customer_window = Window(app, title="Customer Data",height=800,width=700)
+    customer_window.hide()
+    customer_window.show(wait=True)
+    custidb_box = Box(customer_window, width=150,height=800, align="left",border=True)
+    fname_box = Box(customer_window, width=150,height=800, align="left",border=True)
+    lname_box = Box(customer_window, width=150,height=800, align="left",border=True)
+    specneed_box = Box(customer_window, width=250,height=800, align="left",border=True)
     dbcursor.execute("SELECT customer_id, firstName, surname, specialNeed FROM customer")
     for row_index, row in enumerate(dbcursor.fetchall()):
         for col_index, value in enumerate(row):
-            Text(customer_window, text=value, grid=[col_index, row_index])
+            if row.index(value)==0:
+                Text(custidb_box, text=value)
+            elif row.index(value)==1:
+                Text(fname_box, text=value)
+            elif row.index(value)==2:
+                Text(lname_box, text=value)
+            elif row.index(value)==3:
+                Text(specneed_box, text=value)
             
 def show_trip_data():
-    trip_window = Window(app, title="Trip Data")
+    trip_window = Window(app, title="Trip Data",height=800,width=700)
+    trip_window.hide()
+    trip_window.show(wait=True)
+    tripid__box = Box(trip_window, width=50,height=800, align="left",border=True)
+    destname_box = Box(trip_window, width=200,height=800, align="left",border=True)
+    hotelname_box = Box(trip_window, width=150,height=800, align="left",border=True)
+    cost_box = Box(trip_window, width=50,height=800, align="left",border=True)
+    date_box = Box(trip_window, width=100,height=800, align="left",border=True)
+    duration_box = Box(trip_window, width=50,height=800, align="left",border=True)
     dbcursor.execute("SELECT trip_id, destName, hotelName, personCost, startDate, duration FROM trip JOIN destination ON trip.destination_id = destination.destination_id")
     for row_index, row in enumerate(dbcursor.fetchall()):
         for col_index, value in enumerate(row):
-            Text(trip_window, text=value, grid=[col_index, row_index])
+            if row.index(value)==0:
+                Text(tripid__box, text=value)
+            elif row.index(value)==1:
+                Text(destname_box, text=value)
+            elif row.index(value)==2:
+                Text(hotelname_box, text=value)
+            elif row.index(value)==3:
+                Text(cost_box, text=value)
+            elif row.index(value)==4:
+                Text(date_box, text=value)
+            elif row.index(value)==5:
+                Text(duration_box, text=value)
             
 def insert_booking(seat,cust,trip):
     booking_date = datetime.today().strftime('%Y-%m-%d')
@@ -171,9 +203,9 @@ def insert_booking(seat,cust,trip):
     dbcursor.execute("INSERT INTO bookings (customer_id, trip_id, seatNumber, bookingDate) VALUES (%s, %s, %s, %s)", (customer_id, trip_id, seat_number, booking_date))
     mydb.commit()
 
-customer_id_input = TextBox(booking_window, text="Enter: Customer ID")
-trip_id_input = TextBox(booking_window, text="Enter: Trip ID")
-seat_number_input = TextBox(booking_window, text="Enter: Seat Number:")
+customer_id_input = TextBox(booking_input_form, text="Enter: Customer ID")
+trip_id_input = TextBox(booking_input_form, text="Enter: Trip ID")
+seat_number_input = TextBox(booking_input_form, text="Enter: Seat Number:")
 
 booking_input_forms = [customer_id_input,trip_id_input,seat_number_input]
 
@@ -185,10 +217,9 @@ customer_id_input.when_key_pressed = lambda: clear_text(customer_id_input)
 trip_id_input.when_key_pressed = lambda: clear_text(trip_id_input)
 seat_number_input.when_key_pressed = lambda: clear_text(seat_number_input)
 
-customer_button = PushButton(booking_window, text="Show Customer Data", command=show_customer_data)
-trip_button = PushButton(booking_window, text="Show Trip Data", command=show_trip_data)
-
-confirm_button = PushButton(booking_window, text="Confirm Booking", command=lambda: insert_booking(int(seat_number_input.value),int(customer_id_input.value),int(trip_id_input.value)))
+customer_button = PushButton(booking_input_form, text="Show Customer Data", command=show_customer_data)
+trip_button = PushButton(booking_input_form, text="Show Trip Data", command=show_trip_data)
+confirm_button = PushButton(booking_input_form, text="Confirm Booking", command=lambda: insert_booking(int(seat_number_input.value),int(customer_id_input.value),int(trip_id_input.value)))
 
 ################## BOOKING INPUT WINDOW END ##################
 
@@ -215,7 +246,7 @@ message.text_size = 30
 message.font =  "Futura"    
 """
 
-logo = Picture(app, image = r'C:\Users\Adam\Documents\school-u18\u18-school\SDlogoResized.png',grid=[2,0])
+logo = Picture(app, image = r'SDlogoResized.png',grid=[2,0])
 
 input_form_box = Box(app,width=200,height=177,align="left",border=False,layout="grid",grid=[0,0])
 

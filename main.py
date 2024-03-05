@@ -179,6 +179,26 @@ def show_trip_data():
     cost_box = Box(trip_window, width=50,height=800, align="left",border=True)
     date_box = Box(trip_window, width=100,height=800, align="left",border=True)
     duration_box = Box(trip_window, width=50,height=800, align="left",border=True)
+    
+    destid_list = []
+    destid_emptylist = []
+    
+    with dbcursor as cursor:
+        result = cursor.execute("SELECT destination_id FROM trip")
+        rows = cursor.fetchall()
+        for rows in rows:
+            destid_list.append(rows)
+    for x in destid_list:
+        destid_emptylist.append(int(x(0)))
+    placeholders = ', '.join(['%s'] * len(destid_emptylist))
+    query="SELECT destName, hotelName FROM destination WHERE destination_id IN ({})".format(placeholders)
+    
+    with dbcursor as cursor:
+        cursor.execute(query,destid_emptylist)
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+    
     dbcursor.execute("SELECT trip_id, destName, hotelName, personCost, startDate, duration FROM trip JOIN destination ON trip.destination_id = destination.destination_id")
     for row_index, row in enumerate(dbcursor.fetchall()):
         for col_index, value in enumerate(row):
@@ -194,6 +214,8 @@ def show_trip_data():
                 Text(date_box, text=value)
             elif row.index(value)==5:
                 Text(duration_box, text=value)
+                
+    dbcursor.execute("SELECT trip_id,")
             
 def insert_booking(seat,cust,trip):
     booking_date = datetime.today().strftime('%Y-%m-%d')

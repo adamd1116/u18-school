@@ -230,7 +230,7 @@ trip_id_input = TextBox(booking_input_form, text="Enter: Trip ID")
 seat_number_input = TextBox(booking_input_form, text="Enter: Seat Number:")
 
 booking_input_forms = [customer_id_input,trip_id_input,seat_number_input]
-
+#Drop down menu including all possible customers, and select one??
 for i in booking_input_forms:
     i.bg = "white"
     i.width = 30
@@ -243,17 +243,128 @@ customer_button = PushButton(booking_input_form, text="Show Customer Data", comm
 trip_button = PushButton(booking_input_form, text="Show Trip Data", command=show_trip_data)
 confirm_button = PushButton(booking_input_form, text="Confirm Booking", command=lambda: insert_booking(int(seat_number_input.value),int(customer_id_input.value),int(trip_id_input.value)))
 
-################## BOOKING INPUT WINDOW END ##################
+################## BOOKING INPUT WINDOW END ################## ONCE DONE, DO QUERIES
 
-destination_window = Window(app, title = "Add a new destination", height=500, width=600,layout="grid")
+################## DESTINATION INPUT WINDOW START ##################
+
+destination_window = Window(app, title = "Add a new destination", height=500, width=600)
 destination_window.bg = BG_COLOUR
-destination_window_title = Box(destination_window,grid=[0,0],width=600,height=500,align="top",border=True)
+destination_window_title = Box(destination_window,width=600,height=200,align="top",border=True)
 destination_window_message = Text(destination_window_title, text="Add a new\ndestination",size=25)
+destination_input_box = Box(destination_window,width=600,height=200,align="top",border=True)
 
-trip_window = Window(app, title = "Add a new trip", height=500, width=600,layout="grid")
+destination_name = TextBox(destination_input_box,text="Enter: Destination Name")
+hotel_name = TextBox(destination_input_box, text="Enter: Hotel Name (optional)")
+dest_input_forms = [destination_name,hotel_name]
+for i in dest_input_forms:
+    i.bg = "white"
+    i.width=50
+    
+destination_name.when_key_pressed = lambda: clear_text(destination_name)
+hotel_name.when_key_pressed = lambda: clear_text(hotel_name)
+
+dbcursor = mydb.cursor()
+
+def insert_destination(dest,hotel):
+    query = "INSERT INTO destination (destName, hotelName) VALUES (%s,%s)"
+    values = (dest,hotel)
+    sql_insert(query,values)
+
+submit_destination_data = PushButton(destination_input_box,text="Submit Destination",command = lambda: insert_destination(destination_name.value,hotel_name.value))
+
+################## DESTINATION INPUT WINDOW END ##################
+
+################## TRIP INPUT WINDOW START ##################
+
+trip_window = Window(app, title = "Add a new trip", height=500, width=600)
 trip_window.bg = BG_COLOUR
-trip_window_title = Box(trip_window,grid=[0,0],width=600,height=500,align="top",border=True)
+trip_window_title = Box(trip_window,width=600,height=200,align="top",border=True)
 trip_window_message = Text(trip_window_title, text="Add a new trip",size=25)
+trip_input_box = Box(trip_window,width=600,height=400,border=True, align="top")
+
+def select_all_from_table(table_name,output_list): # Used when wanting to display all data for user selection
+    
+    dbcursor = mydb.cursor()
+    
+    with dbcursor as dbc:
+        dbc.execute(f"SELECT * FROM {table_name}")
+        rows = dbc.fetchall()
+        for r in rows:
+            output_list.append(r)
+            
+all_destinations = []      
+all_coaches = []
+all_drivers = []
+select_all_from_table("destination", all_destinations)
+select_all_from_table("coach", all_coaches)
+select_all_from_table("driver", all_drivers)
+
+def get_dest(selected_value):
+    global selected_destination
+    selected_destination = selected_value
+def get_coach(selected_value):
+    global selected_coach
+    selected_coach = selected_value
+def get_driver(selected_value):
+    global selected_driver
+    selected_driver = selected_value
+
+def make_lists_look_nicer(unsorted_original, first_value):
+
+    unsorted_2 = []
+    final_sorted = [first_value]
+
+    for i in unsorted_original:
+        temp = []
+        for column in i:
+            temp.append(str(column))
+        unsorted_2.append(temp)
+        
+    for i in unsorted_2:
+        temp = " - ".join(i)
+        final_sorted.append(temp)
+        
+    return final_sorted
+
+all_destinations_sorted = make_lists_look_nicer(all_destinations, "ID - Destination - Hotel")
+all_coaches_sorted = make_lists_look_nicer(all_coaches, "ID - Registration - Seats")
+all_drivers_sorted = make_lists_look_nicer(all_drivers, "ID - First Name - Last Name")
+all_sorted_lists = [all_destinations_sorted,all_coaches_sorted,all_drivers_sorted]
+
+def insert_trip(dest,cost,date,duration,coach,driver, sorted_lists):
+    destination = sorted_lists[0].index(dest)
+    total_cost = cost
+    final_date = date
+    total_duration = duration
+    selected_coach = sorted_lists[1].index(coach)
+    selected_driver = sorted_lists[2].index(driver)
+
+    query = "INSERT INTO trip (destination_id,personCost,startDate,duration,coach_id,driver_id) VALUES (%s,%s,%s,%s,%s,%s)"
+    values = (destination,int(total_cost),final_date,int(total_duration),selected_coach,selected_driver)
+    sql_insert(query,values)
+
+def testing():
+    print(selected_destination)
+
+select_dest = Text(trip_input_box,text="Select Destination v")
+dest_dropdown = Combo(trip_input_box,options=all_destinations_sorted,width=60,command=get_dest)
+input_cost = TextBox(trip_input_box,text="Enter: Cost for the trip (Whole number)")
+input_start_date = TextBox(trip_input_box,text="Enter: Date for the trip (YYYY-MM-DD)")
+input_duration = TextBox(trip_input_box,text="Enter: Duration of trip (days)")
+trip_inputs = [input_cost,input_start_date,input_duration]
+for i in trip_inputs:
+    i.bg="White"
+    i.width=50
+input_cost.when_key_pressed = lambda: clear_text(input_cost)
+input_start_date.when_key_pressed = lambda: clear_text(input_start_date)
+input_duration.when_key_pressed = lambda: clear_text(input_duration)
+select_coach = Text(trip_input_box,text="Select Coach v")
+coach_dropdown = Combo(trip_input_box,options=all_coaches_sorted,width=60,command=get_coach)
+select_driver = Text(trip_input_box,text="Select Driver v")
+driver_dropdown = Combo(trip_input_box,options=all_drivers_sorted,width=60,command=get_driver)
+confirm_button2 = PushButton(trip_input_box,text="Submit Trip",command = lambda: insert_trip(selected_destination,input_cost.value,input_start_date.value,input_duration.value,selected_coach,selected_driver,all_sorted_lists))
+
+################## TRIP INPUT WINDOW END ##################
 
 customer_details_window.hide()
 booking_window.hide()

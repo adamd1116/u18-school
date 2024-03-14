@@ -94,6 +94,7 @@ def clear_text(input_field):
         
 # lambda is used otherwise if user begins typing in one box, every other box will clear
 
+fname_input.when_key_pressed = lambda: clear_text(fname_input)
 lname_input.when_key_pressed = lambda: clear_text(lname_input)
 email_input.when_key_pressed = lambda: clear_text(email_input)
 pnumber_input.when_key_pressed = lambda: clear_text(pnumber_input)

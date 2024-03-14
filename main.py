@@ -42,6 +42,7 @@ def sql_insert(insert_statement, insert_values):
         dbcursor.execute(insert_statement, insert_values)
         mydb.commit()
         print("SQL INSERT SUCCESSFUL")
+        app.info("Alert","Data inputted succesfully, application might need to be restarted for changes to be recognised")
     except Exception as e:
         app.error("Error!", e)
         print(e)      
@@ -138,112 +139,6 @@ def confirm_insert_customer_data(data):
 confirm_customer_details = PushButton(customer_details_window,grid=[0,11] ,text="Add customer data",command=lambda: confirm_insert_customer_data(input_forms) )
 
 ################## CUSTOMER DETAIL INPUT WINDOW END ##################
-
-################## BOOKING INPUT WINDOW START ##################
-
-booking_window = Window(app, title = "Add a new booking", height=500, width=600)
-booking_window.bg = BG_COLOUR
-booking_window_title = Box(booking_window,width=600,height=100,align="top",border=True)
-booking_window_message = Text(booking_window_title, text="Add a new booking",size=25)
-booking_input_form = Box(booking_window,width=600,height=200,align="left",border=True)
-
-dbcursor = mydb.cursor()
-
-def show_customer_data():
-    customer_window = Window(app, title="Customer Data",height=800,width=700)
-    customer_window.hide()
-    customer_window.show(wait=True)
-    custidb_box = Box(customer_window, width=150,height=800, align="left",border=True)
-    fname_box = Box(customer_window, width=150,height=800, align="left",border=True)
-    lname_box = Box(customer_window, width=150,height=800, align="left",border=True)
-    specneed_box = Box(customer_window, width=250,height=800, align="left",border=True)
-    dbcursor.execute("SELECT customer_id, firstName, surname, specialNeed FROM customer")
-    for row_index, row in enumerate(dbcursor.fetchall()):
-        for col_index, value in enumerate(row):
-            if row.index(value)==0:
-                Text(custidb_box, text=value)
-            elif row.index(value)==1:
-                Text(fname_box, text=value)
-            elif row.index(value)==2:
-                Text(lname_box, text=value)
-            elif row.index(value)==3:
-                Text(specneed_box, text=value)
-            
-def show_trip_data():
-    trip_window = Window(app, title="Trip Data",height=800,width=700)
-    trip_window.hide()
-    trip_window.show(wait=True)
-    tripid__box = Box(trip_window, width=50,height=800, align="left",border=True)
-    destname_box = Box(trip_window, width=200,height=800, align="left",border=True)
-    hotelname_box = Box(trip_window, width=150,height=800, align="left",border=True)
-    cost_box = Box(trip_window, width=50,height=800, align="left",border=True)
-    date_box = Box(trip_window, width=100,height=800, align="left",border=True)
-    duration_box = Box(trip_window, width=50,height=800, align="left",border=True)
-    
-    destid_list = []
-    destid_emptylist = []
-    
-    with dbcursor as cursor:
-        result = cursor.execute("SELECT destination_id FROM trip")
-        rows = cursor.fetchall()
-        for rows in rows:
-            destid_list.append(rows)
-    for x in destid_list:
-        destid_emptylist.append(int(x(0)))
-    placeholders = ', '.join(['%s'] * len(destid_emptylist))
-    query="SELECT destName, hotelName FROM destination WHERE destination_id IN ({})".format(placeholders)
-    
-    with dbcursor as cursor:
-        cursor.execute(query,destid_emptylist)
-        rows = cursor.fetchall()
-        for row in rows:
-            print(row)
-    
-    dbcursor.execute("SELECT trip_id, destName, hotelName, personCost, startDate, duration FROM trip JOIN destination ON trip.destination_id = destination.destination_id")
-    for row_index, row in enumerate(dbcursor.fetchall()):
-        for col_index, value in enumerate(row):
-            if row.index(value)==0:
-                Text(tripid__box, text=value)
-            elif row.index(value)==1:
-                Text(destname_box, text=value)
-            elif row.index(value)==2:
-                Text(hotelname_box, text=value)
-            elif row.index(value)==3:
-                Text(cost_box, text=value)
-            elif row.index(value)==4:
-                Text(date_box, text=value)
-            elif row.index(value)==5:
-                Text(duration_box, text=value)
-                
-    dbcursor.execute("SELECT trip_id,")
-            
-def insert_booking(seat,cust,trip):
-    booking_date = datetime.today().strftime('%Y-%m-%d')
-    seat_number = seat  
-    customer_id = cust  
-    trip_id = trip  
-    dbcursor.execute("INSERT INTO bookings (customer_id, trip_id, seatNumber, bookingDate) VALUES (%s, %s, %s, %s)", (customer_id, trip_id, seat_number, booking_date))
-    mydb.commit()
-
-customer_id_input = TextBox(booking_input_form, text="Enter: Customer ID")
-trip_id_input = TextBox(booking_input_form, text="Enter: Trip ID")
-seat_number_input = TextBox(booking_input_form, text="Enter: Seat Number:")
-
-booking_input_forms = [customer_id_input,trip_id_input,seat_number_input]
-#Drop down menu including all possible customers, and select one??
-for i in booking_input_forms:
-    i.bg = "white"
-    i.width = 30
-    
-customer_id_input.when_key_pressed = lambda: clear_text(customer_id_input)
-trip_id_input.when_key_pressed = lambda: clear_text(trip_id_input)
-seat_number_input.when_key_pressed = lambda: clear_text(seat_number_input)
-
-customer_button = PushButton(booking_input_form, text="Show Customer Data", command=show_customer_data)
-trip_button = PushButton(booking_input_form, text="Show Trip Data", command=show_trip_data)
-confirm_button = PushButton(booking_input_form, text="Confirm Booking", command=lambda: insert_booking(int(seat_number_input.value),int(customer_id_input.value),int(trip_id_input.value)))
-
-################## BOOKING INPUT WINDOW END ################## ONCE DONE, DO QUERIES
 
 ################## DESTINATION INPUT WINDOW START ##################
 
@@ -343,9 +238,6 @@ def insert_trip(dest,cost,date,duration,coach,driver, sorted_lists):
     values = (destination,int(total_cost),final_date,int(total_duration),selected_coach,selected_driver)
     sql_insert(query,values)
 
-def testing():
-    print(selected_destination)
-
 select_dest = Text(trip_input_box,text="Select Destination v")
 dest_dropdown = Combo(trip_input_box,options=all_destinations_sorted,width=60,command=get_dest)
 input_cost = TextBox(trip_input_box,text="Enter: Cost for the trip (Whole number)")
@@ -365,6 +257,97 @@ driver_dropdown = Combo(trip_input_box,options=all_drivers_sorted,width=60,comma
 confirm_button2 = PushButton(trip_input_box,text="Submit Trip",command = lambda: insert_trip(selected_destination,input_cost.value,input_start_date.value,input_duration.value,selected_coach,selected_driver,all_sorted_lists))
 
 ################## TRIP INPUT WINDOW END ##################
+
+################## BOOKING INPUT WINDOW START ##################
+
+booking_window = Window(app, title = "Add a new booking", height=500, width=600)
+booking_window.bg = BG_COLOUR
+booking_window_title = Box(booking_window,width=600,height=100,align="top",border=True)
+booking_window_message = Text(booking_window_title, text="Add a new booking",size=25)
+booking_input_form = Box(booking_window,width=600,height=300,align="left",border=True)
+
+dbcursor = mydb.cursor()
+
+#Customer drop down
+#Trip drop down
+#Input number of seats
+#insert all including current date
+
+all_customers = []
+trip_stuff = []
+dest_id = []
+
+customer_query = "SELECT customer_id, firstName, surname, email FROM customer"
+dbcursor.execute(customer_query)
+cust_data = dbcursor.fetchall()
+for row in cust_data:
+    all_customers.append(row)
+    
+dest_query = "SELECT * FROM destination"
+dbcursor.execute(dest_query)
+dest_data = dbcursor.fetchall()
+for row in dest_data:
+    dest_id.append(row)
+
+trip_query = "SELECT trip_id, destination_id, personCost, startDate, duration FROM trip"
+dbcursor.execute(trip_query)
+trip_data = dbcursor.fetchall()
+for row in trip_data:
+    trip_stuff.append(row)
+    
+nice_looking_trip_data = []
+
+for x in trip_stuff:
+    temptemp = []
+    temptemp.append(x[0])
+    for i in dest_id:
+        if i[0] == x[1]:
+            temptemp.append(i[1])
+            if i[2] == '':
+                temptemp.append('No Hotel')
+            else:
+                temptemp.append(i[2])
+    temptemp.append(x[2])
+    temptemp.append(x[3])
+    temptemp.append(x[4])
+    nice_looking_trip_data.append(temptemp)
+        
+all_customers_sorted = make_lists_look_nicer(all_customers,"ID - First Name - Surname - Email")
+all_trips_sorted = make_lists_look_nicer(nice_looking_trip_data,"ID - Destination - Hotel - Cost - Date - Duration")
+
+sorted_booking_list = [all_customers_sorted,all_trips_sorted]
+
+def get_cust(selected_value):
+    global selected_cust
+    selected_cust = selected_value
+
+def get_trip(selected_value):
+    global selected_trip
+    selected_trip = selected_value
+    
+def insert_booking(cust,trip,seat):
+    customer = sorted_booking_list[0].index(cust)
+    trips = sorted_booking_list[1].index(trip)
+    number_seats = seat
+    
+    query = "INSERT INTO booking (customer_id,trip_id,seatNumber,bookingDate) VALUES (%s,%s,%s,%s)"
+    values = (customer,trips,int(number_seats),date.today())
+    sql_insert(query,values)
+
+select_cust = Text(booking_input_form,text="Select customer for booking v")
+cust_dropdown = Combo(booking_input_form,options=all_customers_sorted,width=80,command=get_cust)
+select_trip = Text(booking_input_form, text="Select trip for booking v")
+trip_dropdown = Combo(booking_input_form, options=all_trips_sorted,width=80,command=get_trip)
+number_of_seats = TextBox(booking_input_form, text="Enter: number of seats for booking")
+number_of_seats.bg = "white"
+number_of_seats.width = 60
+number_of_seats.when_key_pressed = lambda: clear_text(number_of_seats)
+submit_booking_data = PushButton(booking_input_form,text="Submit Booking",command=lambda: insert_booking(selected_cust,selected_trip,number_of_seats.value))
+
+
+#customer_dropdown = Combo(booking_input_form)
+
+################## BOOKING INPUT WINDOW END ################## ONCE DONE, DO QUERIES
 
 customer_details_window.hide()
 booking_window.hide()
